@@ -1,3 +1,5 @@
+![preview](git-ls.png)
+
 # Install (Antigen)
 
 ```zsh
