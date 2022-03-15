@@ -25,15 +25,14 @@ function git-ls() {
         local file_list=$(echo "$list" | tail -n +2)
         local result
         for file in "${(f)file_list}"; do
-            local filename=$(echo "$file" | awk '{print $9}')
+            local filename="${file##* }"
             local raw_filename=$(echo "$filename" | sed 's/\x1B\[[0-9;]*m//g')
-            result="$result$(echo "$file" | awk '{printf "%s %s %s %s %s %s %s %s",$1,$2,$3,$4,$5,$6,$7,$8}')"
+            result="$result${file% *}"
             result="$result $(.get_status_character ${file_status[$raw_filename]})"
             result="$result $filename\n"
         done
 
         echo $result | column -t | sed -r 's/([^ ])  /\1 /g'
-
     else
         echo "$list"
     fi
