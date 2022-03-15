@@ -9,9 +9,8 @@ function git-ls() {
     if git_status=$(git -C "$dir" status -s --porcelain --ignored -unormal 2>/dev/null); then
         declare -A file_status
         for file in "${(f)git_status}"; do
-            local file_split=$(echo "$file" | awk 'BEGIN {RS=" "} {print $1}')
-            local file_array=("${(f)file_split}")
-            file_status[${file:3}]="${file:0:2}"
+            filename=$(echo "${file:3}" | sed -r 's/(.* -> )?(.*)/\2/g')
+            file_status[${filename}]="${file:0:2}"
         done
         file_status[.]='!!'
         file_status[..]='!!'
