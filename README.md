@@ -16,9 +16,16 @@ but shows the status of each file when listing a git directory.
 ```zsh
 -a, --all
 -A, --almost-all
+    --author
+-B, --ignore-backups
+-g
     --group-directories-first
+-G, --no-group
 -h, --human-readable
+    --si
+-o
 -r, --reverse
+-s, --size
 -S
 -t
 ```
