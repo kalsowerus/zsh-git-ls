@@ -3,11 +3,11 @@ function .is-git-dir() {
 }
 
 function git-ls() {
-    zparseopts -D -E -F - a=o_all -all=o_all A=o_almost_all -almost-all=o_almost_all \
+    zparseopts -D -E -F - a=o_all -all=o_all A=o_all -almost-all=o_all \
         -group-directories-first=o_group_directories_first h=o_human_readable \
         -human_readable=o_human_readable || return 1
     local dir="${1:-.}"
-    local list=$(ls -l --color $o_all $o_almost_all $o_group_directories_first $o_human_readable $1)
+    local list=$(ls -l --color $o_all $o_group_directories_first $o_human_readable $1)
 
     local git_status
     if git_status=$(git -C "$dir" status -s --porcelain --ignored -unormal 2>/dev/null); then
