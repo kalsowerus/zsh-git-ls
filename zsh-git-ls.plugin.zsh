@@ -41,7 +41,7 @@ function git-ls() {
 
 function .get_status_character() {
     1=$(echo "$1" | sed -r 's/[^ARM?!]/ /g')
-    if [[ $1 == 'M ' ]]; then # Tracked & Modified & Added
+    if [[ $1 == 'M ' ]]; then # Tracked & Modified
         echo -n '\e[0;32m*\e[0m'
     elif [[ $1 == 'A ' ]]; then # Added
         echo -n '\e[0;32m+\e[0m'
@@ -49,7 +49,9 @@ function .get_status_character() {
         echo -n '\e[0;32mR\e[0m'
     elif [[ $1 == ' M' ]]; then # Tracked & Dirty
         echo -n '\e[0;31m*\e[0m'
-    elif [[ $1 == 'AM' ]]; then # Tracked & Modified & Added & Dirty
+    elif [[ $1 == 'AM' ]]; then # Added & Modified & Dirty
+        echo -n '\e[0;33m+\e[0m'
+    elif [[ $1 == 'MM' ]]; then # Tracked & Modified & Dirty
         echo -n '\e[0;33m*\e[0m'
     elif [[ $1 == '??' ]]; then # Untracked
         echo -n '\e[0;31m?\e[0m'
