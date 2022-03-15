@@ -15,5 +15,8 @@ Introduces a new command `git-ls`, that works just like `ls -l`.
 -A, --almost-all
     --group-directories-first
 -h, --human-readable
+-r, --reverse
+-S
+-t
 ```
 
