@@ -1,7 +1,3 @@
-function .is-git-dir() {
-    
-}
-
 function git-ls() {
     zparseopts -D -E -F - a=o_all -all=o_all A=o_all -almost-all=o_all \
         -group-directories-first=o_group_directories_first h=o_human_readable \
@@ -13,13 +9,9 @@ function git-ls() {
     if git_status=$(git -C "$dir" status -s --porcelain --ignored -unormal 2>/dev/null); then
         declare -A file_status
         for file in "${(f)git_status}"; do
-            #echo "$file"
             local file_split=$(echo "$file" | awk 'BEGIN {RS=" "} {print $1}')
-            #echo "$file_split"
             local file_array=("${(f)file_split}")
-            #echo "$file_array[2]"
             file_status[${file:3}]="${file:0:2}"
-            #echo "$file_status[@]"
         done
         file_status[.]='!!'
         file_status[..]='!!'
@@ -44,9 +36,7 @@ function git-ls() {
 }
 
 function .get_status_character() {
-    #echo "'$1'"
     1=$(echo "$1" | sed -r 's/[^ARM?!]/ /g')
-    #echo "'$1'"
     if [[ $1 == 'M ' ]]; then # Tracked & Modified & Added
         echo -n '\e[0;32m*\e[0m'
     elif [[ $1 == 'A ' ]]; then # Added
