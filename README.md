@@ -11,7 +11,7 @@ antigen bundle kalsowerus/zsh-git-ls
 Introduces a new command `git-ls`, that works just like `ls -l`,
 but shows the status of each file when listing a git directory.
 
-## Supported options
+## Supported options from ls
 
 ```zsh
 -a, --all
