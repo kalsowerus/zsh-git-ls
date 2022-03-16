@@ -26,56 +26,67 @@ function git-ls() {
         return
     fi
 
+    local current_dir_status=
     if [[ $# < 2 ]]; then
-        .zsh_git_ls_list_dir "${1:-.}"
-    else
-        for i in {1..$#}; do
-            local dir="$@[$i]"
-            echo "$dir:"
-            .zsh_git_ls_list_dir "$dir"
-
-            if [[ $i < $# ]]; then
-                echo
-            fi
-        done
+        current_dir_status="${$(.zsh_git_ls_get_git_status "${1:-.}"):--}"
+        if [[ $? != 0 ]]; then
+            current_dir_status=
+        fi
     fi
+
+    local list=$(command ls -l --color $ls_opts $@)
+    local section
+
+    for line in "${(@f)list}"; do
+        if [[ -z "$line" ]]; then
+            current_dir_status=
+            echo
+        elif [[ "$line" =~ '^(\S+):$' ]]; then
+            local current_dir="$match[1]"
+            current_dir_status="${$(.zsh_git_ls_get_git_status "$current_dir"):--}"
+            if [[ $? != 0 ]]; then
+                current_dir_status=
+            fi
+            echo "$line"
+        elif [[ "$line" =~ '^total ' ]]; then
+            echo "$line"
+        else
+            .zsh_git_ls_parse_line "$line" "$current_dir_status"
+        fi
+    done
 }
 
-function .zsh_git_ls_list_dir() {
-    local dir="$1"
-    local list=$(command ls -l --color $ls_opts $dir)
-
-    local git_status
-    if git_status=$(command git -C "$dir" status -s --ignored -unormal 2>/dev/null); then
-        git_status=$(echo "$git_status" | grep -v '/')
-        declare -A file_status
-        for file in "${(f)git_status}"; do
-            filename=$(echo "${file:3}" | sed -r 's/(.* -> )?(.*)/\2/g')
-            file_status[${filename}]="${file:0:2}"
-        done
-        file_status[.]='!!'
-        file_status[..]='!!'
-        file_status[.git]='!!'
-
-        echo "$list" | head -n 1
-        local file_list=$(echo "$list" | tail -n +2)
-        local result
-        for file in "${(f)file_list}"; do
-            if [[ "$file" =~ '(\S+\s*->\s*\S+|\S+)$' ]]; then
-                filename="$match[1]"
-            else
-                filename='<could_not_parse>'
-            fi
-            local raw_filename=$(echo "${filename%% *}" | sed 's/\x1B\[[0-9;]*m//g')
-            result="$result${file%%$filename}"
-            result="$result $(.zsh_git_ls_get_status_character ${file_status[$raw_filename]})"
-            result="$result ${filename// / }\n"
-        done
-
-        echo $result | column -t | sed -r 's/([^ ])  /\1 /g'
+function .zsh_git_ls_parse_line() {
+    local line="$1"
+    local git_status="$2"
+    local filename
+    if [[ "$line" =~ '(\S+\s*->\s*\S+|\S+)$' ]]; then
+        filename="$match[1]"
     else
-        echo "$list"
+        return 1
     fi
+    local raw_filename=$(echo "${filename%% *}" | sed 's/\x1B\[[0-9;]*m//g')
+    local file_status_character
+
+    if [[ -z "$git_status" ]]; then
+        local dir=$(dirname "$raw_filename")
+        git_status=$(.zsh_git_ls_get_git_status "$dir") 
+        if [[ $? != 0 ]]; then
+            file_status_character=' '
+        fi
+    fi
+
+    git_status="$git_status\n!! .\n!! ..\n!! .git"
+
+    if [[ -z "$file_status_character" ]]; then
+        local file_status="${$(echo "$git_status" | grep " $raw_filename$"):0:2}"
+        file_status_character=$(.zsh_git_ls_get_status_character "$file_status")
+    fi
+    echo "${line%%$filename}$file_status_character $filename"
+}
+
+function .zsh_git_ls_get_git_status() {
+    command git -C "$1" status -s --ignored -unormal 2>/dev/null
 }
 
 function .zsh_git_ls_get_status_character() {
