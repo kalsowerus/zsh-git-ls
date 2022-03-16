@@ -1,18 +1,19 @@
 function git-ls() {
-    zparseopts -D -E -F - \
-        a=o_all -all=o_all A=o_all -almost-all=o_all \
-        -author=o_author \
-        B=o_ignore_backups -ignore_backups=o_ignore_backups \
-        g=o_g \
-        -group-directories-first=o_group_directories_first \
-        G=o_no_group -no-group=o_no_group \
-        h=o_human_readable -human_readable=o_human_readable \
-        -si=o_si \
-        o=o_o \
-        r=o_reverse -reverse=o_reverse \
-        s=o_size -size=o_size \
-        S=o_S \
-        t=o_t \
+    zparseopts -D -E -F -a ls_opts - \
+        a -all \
+        A -almost-all \
+        -author \
+        B -ignore_backups \
+        g \
+        -group-directories-first \
+        G -no-group \
+        h -human_readable \
+        -si \
+        o \
+        r -reverse \
+        s -size \
+        S \
+        t \
         -help=o_help 2>/dev/null
 
     if [[ $? != 0 ]]; then
@@ -26,8 +27,7 @@ function git-ls() {
     fi
 
     local dir="${1:-.}"
-    local list=$(ls -l --color $o_all $o_author $o_ignore_backups $o_g $o_group_directories_first \
-        $o_no_group $o_human_readable $o_si $o_o $o_reverse $o_size $o_S $o_t $1)
+    local list=$(ls -l --color $ls_opts $1)
 
     local git_status
     if git_status=$(git -C "$dir" status -s --porcelain --ignored -unormal 2>/dev/null); then
