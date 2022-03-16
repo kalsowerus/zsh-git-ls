@@ -13,7 +13,18 @@ function git-ls() {
         s=o_size -size=o_size \
         S=o_S \
         t=o_t \
-        || return 1
+        -help=o_help 2>/dev/null
+
+    if [[ $? != 0 ]]; then
+        .zsh_git_ls_print_help "$0"
+        return 1
+    fi
+
+    if [[ -n "$o_help" ]]; then
+        .zsh_git_ls_print_help "$0"
+        return
+    fi
+
     local dir="${1:-.}"
     local list=$(ls -l --color $o_all $o_author $o_ignore_backups $o_g $o_group_directories_first \
         $o_no_group $o_human_readable $o_si $o_o $o_reverse $o_size $o_S $o_t $1)
@@ -67,5 +78,27 @@ function .get_status_character() {
     else
         echo -n '\e[0;32m|\e[0m'
     fi
+}
+
+function .zsh_git_ls_print_help() {
+    cat << EOHELP
+Usage: $1 [OPTION]... [FILE]
+    -a, --all                       do not ignore entries starting with .
+    -A, --almost-all                do not list implied . and ..
+        --author                    with -l, print the author of each file
+    -B, --ignore-backups            do not list implied entries ending with ~
+    -g                              list -l, but do not list owner
+        --group-directories-first   group directories before files
+    -G, --no-group                  in a long listing, don't print group names
+    -h, --human-readable            with -ls and -s, print sizes like 1K 234M 2G etc.
+        --si                        likewise, but use powers of 1000 not 1024
+    -o                              like -l, but do not list group information
+    -r, --reverse                   reverse order while sorting
+    -s, --size                      print the allocated size of each file, in blocks
+    -S                              sort by file size, largest first
+    -t                              sort by modification time, newest first
+        --help                      display this help and exit
+EOHELP
+# This comment fixes syntax highlighting '
 }
 
