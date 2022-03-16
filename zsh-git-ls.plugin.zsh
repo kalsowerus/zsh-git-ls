@@ -27,10 +27,10 @@ function git-ls() {
     fi
 
     local dir="${1:-.}"
-    local list=$(ls -l --color $ls_opts $1)
+    local list=$(command ls -l --color $ls_opts $dir)
 
     local git_status
-    if git_status=$(git -C "$dir" status -s --porcelain --ignored -unormal 2>/dev/null); then
+    if git_status=$(command git -C "$dir" status -s --ignored -unormal 2>/dev/null | command grep -v '/'); then
         declare -A file_status
         for file in "${(f)git_status}"; do
             filename=$(echo "${file:3}" | sed -r 's/(.* -> )?(.*)/\2/g')
