@@ -60,11 +60,15 @@ function .zsh_git_ls_list_dir() {
         local file_list=$(echo "$list" | tail -n +2)
         local result
         for file in "${(f)file_list}"; do
-            local filename="${file##* }"
-            local raw_filename=$(echo "$filename" | sed 's/\x1B\[[0-9;]*m//g')
-            result="$result${file% *}"
+            if [[ "$file" =~ '(\S+\s*->\s*\S+|\S+)$' ]]; then
+                filename="$match[1]"
+            else
+                filename='<could_not_parse>'
+            fi
+            local raw_filename=$(echo "${filename%% *}" | sed 's/\x1B\[[0-9;]*m//g')
+            result="$result${file%%$filename}"
             result="$result $(.zsh_git_ls_get_status_character ${file_status[$raw_filename]})"
-            result="$result $filename\n"
+            result="$result ${filename// / }\n"
         done
 
         echo $result | column -t | sed -r 's/([^ ])  /\1 /g'
