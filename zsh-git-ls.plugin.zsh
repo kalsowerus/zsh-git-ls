@@ -26,7 +26,23 @@ function git-ls() {
         return
     fi
 
-    local dir="${1:-.}"
+    if [[ $# < 2 ]]; then
+        .zsh_git_ls_list_dir "${1:-.}"
+    else
+        for i in {1..$#}; do
+            local dir="$@[$i]"
+            echo "$dir:"
+            .zsh_git_ls_list_dir "$dir"
+
+            if [[ $i < $# ]]; then
+                echo
+            fi
+        done
+    fi
+}
+
+function .zsh_git_ls_list_dir() {
+    local dir="$1"
     local list=$(command ls -l --color $ls_opts $dir)
 
     local git_status
@@ -82,7 +98,7 @@ function .zsh_git_ls_get_status_character() {
 
 function .zsh_git_ls_print_help() {
     cat << EOHELP
-Usage: $1 [OPTION]... [FILE]
+Usage: $1 [OPTION]... [FILE]...
     -a, --all                       do not ignore entries starting with .
     -A, --almost-all                do not list implied . and ..
         --author                    with -l, print the author of each file
