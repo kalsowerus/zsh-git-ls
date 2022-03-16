@@ -80,7 +80,7 @@ The status character color used for items with modifications not added to index.
 
 Default: `31` (red)
 
-## `ZSH_GIT_LS_NOT_MODIFIED_CHARACTER`
+## `ZSH_GIT_LS_NOT_MODIFIED_COLOR`
 
 The status character color used for items that are not modified.
 
