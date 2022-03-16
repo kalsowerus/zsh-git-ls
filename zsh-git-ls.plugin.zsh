@@ -47,7 +47,7 @@ function git-ls() {
             local filename="${file##* }"
             local raw_filename=$(echo "$filename" | sed 's/\x1B\[[0-9;]*m//g')
             result="$result${file% *}"
-            result="$result $(.get_status_character ${file_status[$raw_filename]})"
+            result="$result $(.zsh_git_ls_get_status_character ${file_status[$raw_filename]})"
             result="$result $filename\n"
         done
 
@@ -57,7 +57,7 @@ function git-ls() {
     fi
 }
 
-function .get_status_character() {
+function .zsh_git_ls_get_status_character() {
     1=$(echo "$1" | sed -r 's/[^ARM?!]/ /g')
     if [[ $1 == 'M ' ]]; then # Tracked & Modified
         echo -n '\e[0;32m*\e[0m'
