@@ -79,25 +79,39 @@ function .zsh_git_ls_list_dir() {
 }
 
 function .zsh_git_ls_get_status_character() {
+    local MODIFIED_CHARACTER="${ZSH_GIT_LS_MODIFIED_CHARACTER:-*}"
+    local ADDED_CHARACTER="${ZSH_GIT_LS_ADDED_CHARACTER:-+}"
+    local RENAMED_CHARACTER="${ZSH_GIT_LS_RENAMED_CHARACTER:-R}"
+    local UNTRACKED_CHARACTER="${ZSH_GIT_LS_RENAMED_CHARACTER:-?}"
+    local NOT_MODIFIED_CHARACTER="${ZSH_GIT_LS_NOT_MODIFIED_CHARACTER:-|}"
+
+    local RESET_COLOR='\e[0m'
+    local MODIFIED_COLOR="\e[0;${ZSH_GIT_LS_MODIFIED_COLOR:-32}m"
+    local MODIFIED_DIRTY_COLOR="\e[0;${ZSH_GIT_LS_MODIFIED_DIRTY_COLOR:-33}m"
+    local DIRTY_COLOR="\e[0;${ZSH_GIT_LS_DIRTY_COLOR:-31}m"
+    local NOT_MODIFIED_COLOR="\e[0;${ZSH_GIT_LS_NOT_MODIFIED_COLOR:-32}m"
+
     1=$(echo "$1" | sed -r 's/[^ARM?!]/ /g')
-    if [[ $1 == 'M ' ]]; then # Tracked & Modified
-        echo -n '\e[0;32m*\e[0m'
-    elif [[ $1 == 'A ' ]]; then # Added
-        echo -n '\e[0;32m+\e[0m'
-    elif [[ $1 == 'R ' ]]; then # Renamed
-        echo -n '\e[0;32mR\e[0m'
-    elif [[ $1 == ' M' ]]; then # Tracked & Dirty
-        echo -n '\e[0;31m*\e[0m'
-    elif [[ $1 == 'AM' ]]; then # Added & Modified & Dirty
-        echo -n '\e[0;33m+\e[0m'
-    elif [[ $1 == 'MM' ]]; then # Tracked & Modified & Dirty
-        echo -n '\e[0;33m*\e[0m'
-    elif [[ $1 == '??' ]]; then # Untracked
-        echo -n '\e[0;31m?\e[0m'
-    elif [[ $1 == '!!' ]]; then # Ignored
+    if [[ $1 == 'M ' ]]; then   # modified
+        echo -n "$MODIFIED_COLOR$MODIFIED_CHARACTER$RESET_COLOR"
+    elif [[ $1 == 'MM' ]]; then # modified & dirty
+        echo -n "$MODIFIED_DIRTY_COLOR$MODIFIED_CHARACTER$RESET_COLOR"
+    elif [[ $1 == ' M' ]]; then # dirty
+        echo -n "$DIRTY_COLOR$MODIFIED_CHARACTER$RESET_COLOR"
+    elif [[ $1 == 'A ' ]]; then # added
+        echo -n "$MODIFIED_COLOR$ADDED_CHARACTER$RESET_COLOR"
+    elif [[ $1 == 'AM' ]]; then # added & dirty
+        echo -n "$MODIFIED_DIRTY_COLOR$ADDED_CHARACTER$RESET_COLOR"
+    elif [[ $1 == 'R ' ]]; then # renamed
+        echo -n "$MODIFIED_COLOR$RENAMED_CHARACTER$RESET_COLOR"
+    elif [[ $1 == 'RM' ]]; then # renamed & dirty
+        echo -n "$MODIFIED_DIRTY_COLOR$RENAMED_CHARACTER$RESET_COLOR"
+    elif [[ $1 == '??' ]]; then # untracked
+        echo -n "$DIRTY_COLOR$UNTRACKED_CHARACTER$RESET_COLOR"
+    elif [[ $1 == '!!' ]]; then # ignored
         echo -n ' '
-    else
-        echo -n '\e[0;32m|\e[0m'
+    else                        # not modified
+        echo -n "$NOT_MODIFIED_COLOR$NOT_MODIFIED_CHARACTER$RESET_COLOR"
     fi
 }
 
