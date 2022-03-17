@@ -3,20 +3,36 @@ function git-ls() {
         a -all \
         A -almost-all \
         -author \
-        -block-size:: \
+        -block-size: \
         B -ignore_backups \
         c \
         F -classify \
+        -file-type \
+        -full-time \
         g \
         -group-directories-first \
         G -no-group \
         h -human_readable \
         -si \
+        -hide: \
+        -indicator-style: \
+        i -inode \
+        I: -ignore: \
+        k -kibibytes \
+        n -numeric-uid-gid \
         o \
+        p \
         r -reverse \
         s -size \
         S \
+        -sort: \
+        -time: \
+        -time-style: \
         t \
+        u \
+        U \
+        v \
+        X \
         -help=o_help 2>/dev/null
 
     if [[ $? != 0 ]]; then
@@ -134,22 +150,41 @@ function .zsh_git_ls_get_status_character() {
 function .zsh_git_ls_print_help() {
     cat << EOHELP
 Usage: $1 [OPTION]... [FILE]...
-    -a, --all                       do not ignore entries starting with .
-    -A, --almost-all                do not list implied . and ..
-        --author                    with -l, print the author of each file
-    -B, --ignore-backups            do not list implied entries ending with ~
-    -g                              list -l, but do not list owner
-        --group-directories-first   group directories before files
-    -G, --no-group                  in a long listing, don't print group names
-    -h, --human-readable            with -ls and -s, print sizes like 1K 234M 2G etc.
-        --si                        likewise, but use powers of 1000 not 1024
-    -o                              like -l, but do not list group information
-    -r, --reverse                   reverse order while sorting
-    -s, --size                      print the allocated size of each file, in blocks
-    -S                              sort by file size, largest first
-    -t                              sort by modification time, newest first
-        --help                      display this help and exit
+        --help          display this help and exit
+
+For explanations for the following options see 'ls --help'.
+    -a, --all
+    -A, --almost-all
+        --author
+        --block-size=SIZE
+    -B, --ignore-backups
+    -c
+    -F, --classify
+        --file-type
+        --full-time
+    -g
+        --group-directories-first
+    -G, --no-group
+    -h, --human-readable
+        --si
+        --hide=PATTERN
+        --indicator-style=WORD
+    -i, --inode
+    -k, --kibibytes
+    -n, --numeric-uid-gid
+    -o
+    -p
+    -r, --reverse
+    -s, --size
+    -S
+        --sort=WORD
+        --time=WORD
+        --time-style=TIME_STYLE
+    -t
+    -u
+    -U
+    -v
+    -X
 EOHELP
-# This comment fixes syntax highlighting '
 }
 
