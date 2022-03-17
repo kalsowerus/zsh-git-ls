@@ -77,7 +77,7 @@ function .zsh_git_ls_parse_line() {
 
 function .zsh_git_ls_get_git_status() {
     if .zsh_git_ls_is_git_dir "$1"; then
-        echo "${$(command git -C "$1" status -s --ignored -unormal 2>/dev/null | sed 's/"//g'):--}"
+        echo "${$(command git -C "$1" status -s --ignored -unormal 2>/dev/null | sed 's/"//g'):-empty}"
     fi
 }
 
