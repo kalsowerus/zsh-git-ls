@@ -73,7 +73,7 @@ function .zsh_git_ls_parse_line() {
     local line="$1"
     local git_status="$2"
     local filename=$(echo "$line" | perl -pe 's/^.*?\s((\x1B\[[0-9;]*m)?'\''.+->.+|(\x1B\[[0-9;]*m)?'\''.+|\s?\S+\s*->.+|\s?\S+)$/\1/')
-    local raw_filename=$(echo "$filename" |  sed 's/\x1B\[[0-9;]*m//g' | sed -r 's/^ ?'\''?([^'\'']+)'\''?.*$/\1/')
+    local raw_filename=$(echo "$filename" |  sed 's/\x1B\[[0-9;]*m//g' | sed -r 's/^ ?'\''?([^'\'']+)'\''?.*$/\1/' | sed -r 's/^(.*?)[*/=>@|]/\1/')
     local file_status_character
 
     if [[ -z "$git_status" ]]; then
