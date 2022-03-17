@@ -17,17 +17,35 @@ but shows the status of each file when listing a git directory.
 -a, --all
 -A, --almost-all
     --author
+    --block-size=SIZE
 -B, --ignore-backups
+-c
+-F, --classify
+    --file-type
+    --full-time
 -g
     --group-directories-first
 -G, --no-group
 -h, --human-readable
     --si
+    --hide=PATTERN
+    --indicator-style=WORD
+-i, --inode
+-k, --kibibytes
+-n, --numberic-uid-gid
 -o
+-p
 -r, --reverse
 -s, --size
 -S
+    --sort=WORD
+    --time=WORD
+    --time-style=TIME_STYLE
 -t
+-u
+-U
+-v
+-X
 ```
 
 # Configuration
