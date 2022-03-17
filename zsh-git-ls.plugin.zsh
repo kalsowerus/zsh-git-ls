@@ -53,13 +53,8 @@ function git-ls() {
 function .zsh_git_ls_parse_line() {
     local line="$1"
     local git_status="$2"
-    local filename
-    if [[ "$line" =~ ' ('\''.+'\''|\s??\S+\s*->\s*\S+|\s??\S+)$' ]]; then
-        filename="$match[1]"
-    else
-        return 1
-    fi
-    local raw_filename=$(echo "$filename" | sed -r 's/^ ?'\''?([^'\'']+)'\''?$/\1/' | sed 's/\x1B\[[0-9;]*m//g')
+    local filename=$(echo "$line" | perl -pe 's/^.*?\s((\x1B\[[0-9;]*m)?'\''.+->.+|(\x1B\[[0-9;]*m)?'\''.+|\s?\S+\s*->.+|\s?\S+)$/\1/')
+    local raw_filename=$(echo "$filename" |  sed 's/\x1B\[[0-9;]*m//g' | sed -r 's/^ ?'\''?([^'\'']+)'\''?.*$/\1/')
     local file_status_character
 
     if [[ -z "$git_status" ]]; then
@@ -82,7 +77,7 @@ function .zsh_git_ls_parse_line() {
 
 function .zsh_git_ls_get_git_status() {
     if .zsh_git_ls_is_git_dir "$1"; then
-        echo ${$(command git -C "$1" status -s --ignored -unormal 2>/dev/null | sed 's/"//g'):--}
+        echo "${$(command git -C "$1" status -s --ignored -unormal 2>/dev/null | sed 's/"//g'):--}"
     fi
 }
 
