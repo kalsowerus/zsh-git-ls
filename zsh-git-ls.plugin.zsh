@@ -28,13 +28,10 @@ function git-ls() {
 
     local current_dir_status=
     if [[ $# < 2 ]]; then
-        current_dir_status="${$(.zsh_git_ls_get_git_status "${1:-.}"):--}"
-        if [[ $? != 0 ]]; then
-            current_dir_status=
-        fi
+        current_dir_status="$(.zsh_git_ls_get_git_status "${1:-.}")"
     fi
 
-    local list=$(command ls -l --color $ls_opts $@)
+    local list=$(command ls -l --quoting-style=shell --color $ls_opts $@)
     local section
 
     for line in "${(@f)list}"; do
@@ -43,10 +40,7 @@ function git-ls() {
             echo
         elif [[ "$line" =~ '^(\S+):$' ]]; then
             local current_dir="$match[1]"
-            current_dir_status="${$(.zsh_git_ls_get_git_status "$current_dir"):--}"
-            if [[ $? != 0 ]]; then
-                current_dir_status=
-            fi
+            current_dir_status="$(.zsh_git_ls_get_git_status "$current_dir")"
             echo "$line"
         elif [[ "$line" =~ '^total ' ]]; then
             echo "$line"
@@ -60,18 +54,19 @@ function .zsh_git_ls_parse_line() {
     local line="$1"
     local git_status="$2"
     local filename
-    if [[ "$line" =~ '(\S+\s*->\s*\S+|\S+)$' ]]; then
+    if [[ "$line" =~ ' ('\''.+'\''|\s??\S+\s*->\s*\S+|\s??\S+)$' ]]; then
         filename="$match[1]"
     else
         return 1
     fi
-    local raw_filename=$(echo "${filename%% *}" | sed 's/\x1B\[[0-9;]*m//g')
+    local raw_filename=$(echo "$filename" | sed -r 's/^ ?'\''?([^'\'']+)'\''?$/\1/' | sed 's/\x1B\[[0-9;]*m//g')
     local file_status_character
 
     if [[ -z "$git_status" ]]; then
         local dir=$(dirname "$raw_filename")
-        git_status=$(.zsh_git_ls_get_git_status "$dir") 
-        if [[ $? != 0 ]]; then
+        if .zsh_git_ls_is_git_dir "$dir"; then
+            git_status=$(.zsh_git_ls_get_git_status "$dir") 
+        else
             file_status_character=' '
         fi
     fi
@@ -86,7 +81,13 @@ function .zsh_git_ls_parse_line() {
 }
 
 function .zsh_git_ls_get_git_status() {
-    command git -C "$1" status -s --ignored -unormal 2>/dev/null
+    if .zsh_git_ls_is_git_dir "$1"; then
+        echo ${$(command git -C "$1" status -s --ignored -unormal 2>/dev/null | sed 's/"//g'):--}
+    fi
+}
+
+function .zsh_git_ls_is_git_dir() {
+    command git -C "$1" rev-parse >/dev/null 2>&1
 }
 
 function .zsh_git_ls_get_status_character() {
