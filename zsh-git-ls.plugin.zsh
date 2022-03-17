@@ -3,7 +3,10 @@ function git-ls() {
         a -all \
         A -almost-all \
         -author \
+        -block-size:: \
         B -ignore_backups \
+        c \
+        F -classify \
         g \
         -group-directories-first \
         G -no-group \
@@ -60,17 +63,21 @@ function .zsh_git_ls_parse_line() {
     if [[ -z "$git_status" ]]; then
         local dir=$(dirname "$raw_filename")
         if .zsh_git_ls_is_git_dir "$dir"; then
-            git_status=$(.zsh_git_ls_get_git_status "$dir") 
+            git_status="$(.zsh_git_ls_get_git_status "$dir")"
         else
-            file_status_character=' '
+            file_status_character=' '
         fi
     fi
 
-    git_status="$git_status\n!! .\n!! ..\n!! .git"
+    if [[ -n "$git_status" ]] && [[ "$git_status" != 'not_a_git_dir' ]]; then
+        git_status="$git_status\n!! .\n!! ..\n!! .git"
+    fi
 
-    if [[ -z "$file_status_character" ]]; then
+    if [[ -z "$file_status_character" ]] && [[ "$git_status" != 'not_a_git_dir' ]]; then
         local file_status="${$(echo "$git_status" | grep " $raw_filename$"):0:2}"
         file_status_character=$(.zsh_git_ls_get_status_character "$file_status")
+    else
+        file_status_character=' '
     fi
     echo "${line%%$filename}$file_status_character $filename"
 }
@@ -78,6 +85,8 @@ function .zsh_git_ls_parse_line() {
 function .zsh_git_ls_get_git_status() {
     if .zsh_git_ls_is_git_dir "$1"; then
         echo "${$(command git -C "$1" status -s --ignored -unormal 2>/dev/null | sed 's/"//g'):-empty}"
+    else
+        echo 'not_a_git_dir'
     fi
 }
 
