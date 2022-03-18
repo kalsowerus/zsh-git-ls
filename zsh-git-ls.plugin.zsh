@@ -45,52 +45,68 @@ function git-ls() {
         return
     fi
 
+    local dir=
     local current_dir_status=
-    if [[ $# < 2 ]]; then
-        current_dir_status="$(.zsh_git_ls_get_git_status "${1:-.}")"
+    if [[ $# < 2 ]]; then # no or one argument is given
+        dir="${1:-.}"
+        current_dir_status="$(.zsh_git_ls_get_git_status "$dir")"
     fi
 
     local list=$(command ls -l --quoting-style=shell --color $ls_opts $@)
     local section
 
     for line in "${(@f)list}"; do
-        if [[ -z "$line" ]]; then
+        if [[ -z "$line" ]]; then # empty line separating sections when listing multiple files/directories
+            dir=
             current_dir_status=
             echo
-        elif [[ "$line" =~ '^(\S+):$' ]]; then
-            local current_dir="$match[1]"
-            current_dir_status="$(.zsh_git_ls_get_git_status "$current_dir")"
+        elif [[ "$line" =~ '^(\S+):$' ]]; then # header line at the beginning of a directory list
+            dir="$match[1]"
+            current_dir_status=$(.zsh_git_ls_get_git_status "$dir")
             echo "$line"
-        elif [[ "$line" =~ '^total ' ]]; then
+        elif [[ "$line" =~ '^total ' ]]; then # line showing total size, just echo
             echo "$line"
-        else
-            .zsh_git_ls_parse_line "$line" "$current_dir_status"
+        elif [[ -z "$dir" ]]; then # $dir is not set: we are in the single file section
+            local filename=$(.zsh_git_ls_get_filename "$line")
+            local raw_filename=$(.zsh_git_ls_get_raw_filename "$filename")
+            dir=$(dirname "$raw_filename")
+            current_dir_status=$(.zsh_git_ls_get_git_status "$dir")
+            .zsh_git_ls_parse_line "$line" "$filename" "$raw_filename" "$dir" "$current_dir_status"
+            dir=
+        else # normal line in directory list
+            local filename=$(.zsh_git_ls_get_filename "$line")
+            local raw_filename=$(.zsh_git_ls_get_raw_filename "$filename")
+            .zsh_git_ls_parse_line "$line" "$filename" "$raw_filename" "$dir" "$current_dir_status"
         fi
     done
 }
 
 function .zsh_git_ls_parse_line() {
     local line="$1"
-    local git_status="$2"
-    local filename=$(echo "$line" | perl -pe 's/^.*?\s((\x1B\[[0-9;]*m)?'\''.+->.+|(\x1B\[[0-9;]*m)?'\''.+|\s?\S+\s*->.+|\s?\S+)$/\1/')
-    local raw_filename=$(echo "$filename" |  sed 's/\x1B\[[0-9;]*m//g' | sed -r 's/^ ?'\''?([^'\'']+)'\''?.*$/\1/' | sed -r 's/^(.*?)[*/=>@|]/\1/')
+    local filename="$2"
+    local raw_filename="$3"
+    local dir="$4"
+    local git_status="$5"
     local file_status_character
-
-    if [[ -z "$git_status" ]]; then
-        local dir=$(dirname "$raw_filename")
-        if .zsh_git_ls_is_git_dir "$dir"; then
-            git_status="$(.zsh_git_ls_get_git_status "$dir")"
-        else
-            file_status_character=' '
-        fi
-    fi
 
     if [[ -n "$git_status" ]] && [[ "$git_status" != 'not_a_git_dir' ]]; then
         git_status="$git_status\n!! .\n!! ..\n!! .git"
     fi
 
-    if [[ -z "$file_status_character" ]] && [[ "$git_status" != 'not_a_git_dir' ]]; then
-        local file_status="${$(echo "$git_status" | grep " $raw_filename$"):0:2}"
+    if [[ "$git_status" != 'not_a_git_dir' ]]; then
+        local file_status
+        if [[ -d "$dir/${raw_filename:t}" ]]; then
+            local dir_status=$(echo "$git_status" | grep " $raw_filename")
+            if [[ "$dir_status" =~ '!! .*' ]]; then
+                file_status='!!'
+            elif [[ "$dir_status" =~ '[ ?]. .*' ]]; then
+                file_status='/M'
+            elif [[ "$dir_status" =~ '[.M] .*' ]]; then
+                file_status=' /'
+            fi
+        else
+            file_status="${$(echo "$git_status" | grep " $raw_filename:t$"):0:2}"
+        fi
         file_status_character=$(.zsh_git_ls_get_status_character "$file_status")
     else
         file_status_character=' '
@@ -100,7 +116,8 @@ function .zsh_git_ls_parse_line() {
 
 function .zsh_git_ls_get_git_status() {
     if .zsh_git_ls_is_git_dir "$1"; then
-        echo "${$(command git -C "$1" status -s --ignored -unormal 2>/dev/null | sed 's/"//g'):-empty}"
+        local git_status="${$(command git -C "$1" status -s --ignored -unormal 2>/dev/null | sed 's/"//g'):-empty}"
+        echo "$git_status"
     else
         echo 'not_a_git_dir'
     fi
@@ -110,12 +127,21 @@ function .zsh_git_ls_is_git_dir() {
     command git -C "$1" rev-parse >/dev/null 2>&1
 }
 
+function .zsh_git_ls_get_filename() {
+    echo "$1" | perl -pe 's/^.*?\s((\x1B\[[0-9;]*m)?'\''.+->.+|(\x1B\[[0-9;]*m)?'\''.+|\s?\S+\s*->.+|\s?\S+)$/\1/'
+}
+
+function .zsh_git_ls_get_raw_filename() {
+    echo "$filename" |  sed 's/\x1B\[[0-9;]*m//g' | sed -r 's/^ ?'\''?([^'\'']+)'\''?.*$/\1/' | sed -r 's/^(.*?)\s+->\s+.*$/\1/g' | sed -r 's/^(.*?)[*/=>@|]$/\1/'
+}
+
 function .zsh_git_ls_get_status_character() {
     local MODIFIED_CHARACTER="${ZSH_GIT_LS_MODIFIED_CHARACTER:-*}"
     local ADDED_CHARACTER="${ZSH_GIT_LS_ADDED_CHARACTER:-+}"
     local RENAMED_CHARACTER="${ZSH_GIT_LS_RENAMED_CHARACTER:-R}"
     local UNTRACKED_CHARACTER="${ZSH_GIT_LS_RENAMED_CHARACTER:-?}"
     local NOT_MODIFIED_CHARACTER="${ZSH_GIT_LS_NOT_MODIFIED_CHARACTER:-|}"
+    local DIR_CONTAINING_CHANGES_CHARACTER="${ZSH_GIT_LS_DIR_CONTAINING_CHANGED_CHARACTER:-|}"
 
     local RESET_COLOR='\e[0m'
     local MODIFIED_COLOR="\e[0;${ZSH_GIT_LS_MODIFIED_COLOR:-32}m"
@@ -123,7 +149,7 @@ function .zsh_git_ls_get_status_character() {
     local DIRTY_COLOR="\e[0;${ZSH_GIT_LS_DIRTY_COLOR:-31}m"
     local NOT_MODIFIED_COLOR="\e[0;${ZSH_GIT_LS_NOT_MODIFIED_COLOR:-32}m"
 
-    1=$(echo "$1" | sed -r 's/[^ARM?!]/ /g')
+    1=$(echo "$1" | sed -r 's/[^ARM?!/]/ /g')
     if [[ $1 == 'M ' ]]; then   # modified
         echo -n "$MODIFIED_COLOR$MODIFIED_CHARACTER$RESET_COLOR"
     elif [[ $1 == 'MM' ]]; then # modified & dirty
@@ -142,6 +168,10 @@ function .zsh_git_ls_get_status_character() {
         echo -n "$DIRTY_COLOR$UNTRACKED_CHARACTER$RESET_COLOR"
     elif [[ $1 == '!!' ]]; then # ignored
         echo -n ' '
+    elif [[ $1 == ' /' ]]; then # dir containing files that are modified & dirty
+        echo -n "$MODIFIED_DIRTY_COLOR$DIR_CONTAINING_CHANGES_CHARACTER$RESET_COLOR"
+    elif [[ $1 == '/M' ]]; then # dir containing files that are dirty
+        echo -n "$DIRTY_COLOR$DIR_CONTAINING_CHANGES_CHARACTER$RESET_COLOR"
     else                        # not modified
         echo -n "$NOT_MODIFIED_COLOR$NOT_MODIFIED_CHARACTER$RESET_COLOR"
     fi
