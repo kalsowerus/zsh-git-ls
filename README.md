@@ -80,6 +80,12 @@ The status character used for items that are not modified.
 
 Default: `|`
 
+## `ZSH_GIT_LS_DIR_CONTAINING_CHANGES_CHARACTER`
+
+The status character used for directories that contain modified/dirty/untracked files.
+
+Default: `/`
+
 ## `ZSH_GIT_LS_MODIFIED_COLOR`
 
 The status character color used for items with all modifications added to index.
