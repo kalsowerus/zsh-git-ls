@@ -20,6 +20,8 @@ but shows the status of each file when listing a git directory.
     --block-size=SIZE
 -B, --ignore-backups
 -c
+-d, --directory
+-f
 -F, --classify
     --file-type
     --full-time
@@ -36,6 +38,7 @@ but shows the status of each file when listing a git directory.
 -o
 -p
 -r, --reverse
+-R, --recursive
 -s, --size
 -S
     --sort=WORD
