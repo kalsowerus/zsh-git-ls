@@ -6,6 +6,9 @@ function git-ls() {
         -block-size: \
         B -ignore_backups \
         c \
+        -color::=o_color \
+        d -directory \
+        f \
         F -classify \
         -file-type \
         -full-time \
@@ -23,6 +26,7 @@ function git-ls() {
         o \
         p \
         r -reverse \
+        R -recursive \
         s -size \
         S \
         -sort: \
@@ -53,7 +57,7 @@ function git-ls() {
     fi
 
     local list
-    list=$(command ls -l --quoting-style=shell --color $ls_opts $@)
+    list=$(command ls -l --quoting-style=shell $ls_opts $o_color $@)
     local rc=$?
     local section
 
@@ -203,6 +207,9 @@ For explanations for the following options see 'ls --help'.
         --block-size=SIZE
     -B, --ignore-backups
     -c
+        --color[=WHEN]
+    -d, --directory
+    -f
     -F, --classify
         --file-type
         --full-time
@@ -219,6 +226,7 @@ For explanations for the following options see 'ls --help'.
     -o
     -p
     -r, --reverse
+    -R, --recursive
     -s, --size
     -S
         --sort=WORD
