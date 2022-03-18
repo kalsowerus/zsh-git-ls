@@ -94,24 +94,29 @@ function .zsh_git_ls_parse_line() {
     local file_status_character
 
     if [[ -n "$git_status" ]] && [[ "$git_status" != 'not_a_git_dir' ]]; then
-        git_status="$git_status\n!! .\n!! ..\n!! .git/"
+        git_status="$git_status\n!! ./\n!! ../\n!! .git/"
     fi
 
     if [[ "$git_status" != 'not_a_git_dir' ]]; then
+        local dir_path=$(realpath "$dir")
+        local repo_path=$(git -C "$dir" rev-parse --show-toplevel)
+        local path_prefix="${dir_path#$repo_path}"
+        local file_path="$path_prefix/$raw_filename:t"
+        file_path="${file_path:1}"
         local file_status
-        if [[ -d "$dir/${raw_filename:t}" ]]; then
-            local dir_status=$(echo "$git_status" | grep " $raw_filename/")
+        if [[ -d "$repo_path/$file_path" ]]; then
+            local dir_status=$(echo "$git_status" | grep "^.. $file_path/")
             if [[ "$dir_status" =~ '[ ?]. .*' ]]; then # dirty
                 file_status='/M'
             elif [[ "$dir_status" =~ '.M .*' ]]; then # modified & dirty
                 file_status=' /'
             elif [[ "$dir_status" =~ '.  .*' ]]; then # modified
                 file_status='/ '
-            elif [[ "$dir_status" =~ "!! $raw_filename:t/$" ]]; then
+            elif [[ "$dir_status" =~ '!! .*' ]]; then
                 file_status='!!'
             fi
         else
-            file_status="${$(echo "$git_status" | grep " $raw_filename:t$"):0:2}"
+            file_status="${$(echo "$git_status" | grep " $file_path$"):0:2}"
         fi
         file_status_character=$(.zsh_git_ls_get_status_character "$file_status")
     else
@@ -122,7 +127,8 @@ function .zsh_git_ls_parse_line() {
 
 function .zsh_git_ls_get_git_status() {
     if .zsh_git_ls_is_git_dir "$1"; then
-        local git_status="${$(command git -C "$1" status -s --ignored -unormal 2>/dev/null | sed 's/"//g'):-empty}"
+        local git_status="${$(command git -C "$1" status --porcelain --ignored -uall 2>/dev/null | sed 's/"//g'):-empty}"
+        git_status="$git_status\n$(command git -C "$1" status --porcelain --ignored -unormal 2>/dev/null | sed 's/"//g' | grep '^!!')"
         echo "$git_status"
     else
         echo 'not_a_git_dir'
