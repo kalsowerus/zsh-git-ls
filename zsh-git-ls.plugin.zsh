@@ -6,7 +6,6 @@ function git-ls() {
         -block-size: \
         B -ignore_backups \
         c \
-        -color::=o_color \
         d -directory \
         f \
         F -classify \
@@ -57,7 +56,7 @@ function git-ls() {
     fi
 
     local list
-    list=$(command ls -l --quoting-style=shell $ls_opts $o_color $@)
+    list=$(command ls -l --quoting-style=shell --color=always $ls_opts $@)
     local rc=$?
     local section
 
@@ -207,7 +206,6 @@ For explanations for the following options see 'ls --help'.
         --block-size=SIZE
     -B, --ignore-backups
     -c
-        --color[=WHEN]
     -d, --directory
     -f
     -F, --classify
