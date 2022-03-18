@@ -101,10 +101,12 @@ function .zsh_git_ls_parse_line() {
         local file_status
         if [[ -d "$dir/${raw_filename:t}" ]]; then
             local dir_status=$(echo "$git_status" | grep " $raw_filename/")
-            if [[ "$dir_status" =~ '[ ?]. .*' ]]; then
+            if [[ "$dir_status" =~ '[ ?]. .*' ]]; then # dirty
                 file_status='/M'
-            elif [[ "$dir_status" =~ '.M .*' ]]; then
+            elif [[ "$dir_status" =~ '.M .*' ]]; then # modified & dirty
                 file_status=' /'
+            elif [[ "$dir_status" =~ '.  .*' ]]; then # modified
+                file_status='/ '
             elif [[ "$dir_status" =~ "!! $raw_filename:t/$" ]]; then
                 file_status='!!'
             fi
@@ -145,7 +147,7 @@ function .zsh_git_ls_get_status_character() {
     local RENAMED_CHARACTER="${ZSH_GIT_LS_RENAMED_CHARACTER:-R}"
     local UNTRACKED_CHARACTER="${ZSH_GIT_LS_RENAMED_CHARACTER:-?}"
     local NOT_MODIFIED_CHARACTER="${ZSH_GIT_LS_NOT_MODIFIED_CHARACTER:-|}"
-    local DIR_CONTAINING_CHANGES_CHARACTER="${ZSH_GIT_LS_DIR_CONTAINING_CHANGED_CHARACTER:-|}"
+    local DIR_CONTAINING_CHANGES_CHARACTER="${ZSH_GIT_LS_DIR_CONTAINING_CHANGED_CHARACTER:-/}"
 
     local RESET_COLOR='\e[0m'
     local MODIFIED_COLOR="\e[0;${ZSH_GIT_LS_MODIFIED_COLOR:-32}m"
@@ -172,6 +174,8 @@ function .zsh_git_ls_get_status_character() {
         echo -n "$DIRTY_COLOR$UNTRACKED_CHARACTER$RESET_COLOR"
     elif [[ $1 == '!!' ]]; then # ignored
         echo -n ' '
+    elif [[ $1 == '/ ' ]]; then # dir containing files that are modified
+        echo -n "$MODIFIED_COLOR$DIR_CONTAINING_CHANGES_CHARACTER$RESET_COLOR"
     elif [[ $1 == ' /' ]]; then # dir containing files that are modified & dirty
         echo -n "$MODIFIED_DIRTY_COLOR$DIR_CONTAINING_CHANGES_CHARACTER$RESET_COLOR"
     elif [[ $1 == '/M' ]]; then # dir containing files that are dirty
