@@ -101,7 +101,7 @@ function .zsh_git_ls_parse_line() {
                 file_status='/M'
             elif [[ "$dir_status" =~ '.M .*' ]]; then
                 file_status=' /'
-            elif [[ "$dir_status" =~ '!! .*' ]]; then
+            elif [[ "$dir_status" =~ "!! $raw_filename:t/" ]]; then
                 file_status='!!'
             fi
         else
