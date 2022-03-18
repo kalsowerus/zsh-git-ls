@@ -90,19 +90,19 @@ function .zsh_git_ls_parse_line() {
     local file_status_character
 
     if [[ -n "$git_status" ]] && [[ "$git_status" != 'not_a_git_dir' ]]; then
-        git_status="$git_status\n!! .\n!! ..\n!! .git"
+        git_status="$git_status\n!! .\n!! ..\n!! .git/"
     fi
 
     if [[ "$git_status" != 'not_a_git_dir' ]]; then
         local file_status
         if [[ -d "$dir/${raw_filename:t}" ]]; then
-            local dir_status=$(echo "$git_status" | grep " $raw_filename")
-            if [[ "$dir_status" =~ '!! .*' ]]; then
-                file_status='!!'
-            elif [[ "$dir_status" =~ '[ ?]. .*' ]]; then
+            local dir_status=$(echo "$git_status" | grep " $raw_filename/")
+            if [[ "$dir_status" =~ '[ ?]. .*' ]]; then
                 file_status='/M'
-            elif [[ "$dir_status" =~ '[.M] .*' ]]; then
+            elif [[ "$dir_status" =~ '.M .*' ]]; then
                 file_status=' /'
+            elif [[ "$dir_status" =~ '!! .*' ]]; then
+                file_status='!!'
             fi
         else
             file_status="${$(echo "$git_status" | grep " $raw_filename:t$"):0:2}"
