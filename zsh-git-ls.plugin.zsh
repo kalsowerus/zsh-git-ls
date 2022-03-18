@@ -47,7 +47,7 @@ function git-ls() {
 
     local dir=
     local current_dir_status=
-    if [[ $# < 2 ]]; then # no or one argument is given
+    if (( $# < 2 )); then # no or one argument is given
         dir="${1:-.}"
         current_dir_status="$(.zsh_git_ls_get_git_status "$dir")"
     fi
