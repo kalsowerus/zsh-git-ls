@@ -52,7 +52,9 @@ function git-ls() {
         current_dir_status="$(.zsh_git_ls_get_git_status "$dir")"
     fi
 
-    local list=$(command ls -l --quoting-style=shell --color $ls_opts $@)
+    local list
+    list=$(command ls -l --quoting-style=shell --color $ls_opts $@)
+    local rc=$?
     local section
 
     for line in "${(@f)list}"; do
@@ -79,6 +81,8 @@ function git-ls() {
             .zsh_git_ls_parse_line "$line" "$filename" "$raw_filename" "$dir" "$current_dir_status"
         fi
     done
+
+    return $rc
 }
 
 function .zsh_git_ls_parse_line() {
