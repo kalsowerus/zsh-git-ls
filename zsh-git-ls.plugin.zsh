@@ -50,9 +50,11 @@ function git-ls() {
 
     local dir=
     local current_dir_status=
+    local ignored_paths=
     if (( $# < 2 )); then # no or one argument is given
         dir="${1:-.}"
         current_dir_status="$(.zsh_git_ls_get_git_status "$dir")"
+        ignored_paths=$(.zsh_git_ls_get_ignored_paths "$dir")
     fi
 
     local list
@@ -64,10 +66,12 @@ function git-ls() {
         if [[ -z "$line" ]]; then # empty line separating sections when listing multiple files/directories
             dir=
             current_dir_status=
+            ignored_paths=
             echo
         elif [[ "$line" =~ '^(\S+):$' ]]; then # header line at the beginning of a directory list
             dir="$match[1]"
             current_dir_status=$(.zsh_git_ls_get_git_status "$dir")
+            ignored_paths=$(.zsh_git_ls_get_ignored_paths "$dir")
             echo "$line"
         elif [[ "$line" =~ '^total ' ]]; then # line showing total size, just echo
             echo "$line"
@@ -76,12 +80,13 @@ function git-ls() {
             local raw_filename=$(.zsh_git_ls_get_raw_filename "$filename")
             dir=$(dirname "$raw_filename")
             current_dir_status=$(.zsh_git_ls_get_git_status "$dir")
-            .zsh_git_ls_parse_line "$line" "$filename" "$raw_filename" "$dir" "$current_dir_status"
+            ignored_paths=$(.zsh_git_ls_get_ignored_paths "$dir")
+            .zsh_git_ls_parse_line "$line" "$filename" "$raw_filename" "$dir" "$current_dir_status" "$ignored_paths"
             dir=
         else # normal line in directory list
             local filename=$(.zsh_git_ls_get_filename "$line")
             local raw_filename=$(.zsh_git_ls_get_raw_filename "$filename")
-            .zsh_git_ls_parse_line "$line" "$filename" "$raw_filename" "$dir" "$current_dir_status"
+            .zsh_git_ls_parse_line "$line" "$filename" "$raw_filename" "$dir" "$current_dir_status" "$ignored_paths"
         fi
     done
 
@@ -94,6 +99,7 @@ function .zsh_git_ls_parse_line() {
     local raw_filename="$3"
     local dir="$4"
     local git_status="$5"
+    local ignored_paths="$6"
     local file_status_character
 
     if [[ -n "$git_status" ]] && [[ "$git_status" != 'not_a_git_dir' ]]; then
@@ -115,11 +121,14 @@ function .zsh_git_ls_parse_line() {
                 file_status=' /'
             elif [[ "$dir_status" =~ '.  .*' ]]; then # modified
                 file_status='/ '
-            elif [[ "$dir_status" =~ '!! .*' ]]; then
+            elif .zsh_git_ls_is_ignored "$file_path" "$ignored_paths"; then
                 file_status='!!'
             fi
         else
             file_status="${$(echo "$git_status" | grep " $file_path$"):0:2}"
+            if [[ -z "$file_status" ]] && .zsh_git_ls_is_ignored "$file_path" "$ignored_paths"; then
+                file_status='!!'
+            fi
         fi
         file_status_character=$(.zsh_git_ls_get_status_character "$file_status")
     else
@@ -130,12 +139,14 @@ function .zsh_git_ls_parse_line() {
 
 function .zsh_git_ls_get_git_status() {
     if .zsh_git_ls_is_git_dir "$1"; then
-        local git_status="${$(command git -C "$1" status --porcelain --ignored -uall 2>/dev/null | sed 's/"//g'):-empty}"
-        git_status="$git_status\n$(command git -C "$1" status --porcelain --ignored -unormal 2>/dev/null | sed 's/"//g' | grep '^!!')"
-        echo "$git_status"
+        echo "${$(command git -C "$1" status --porcelain -uall 2>/dev/null | grep -v '^!!' | sed 's/"//g'):-empty}"
     else
         echo 'not_a_git_dir'
     fi
+}
+
+function .zsh_git_ls_get_ignored_paths() {
+    command git -C "$1" status --porcelain --ignored -unormal 2>/dev/null | grep '^!!' | sed -r 's/^!! (.*)$/\1/g' | sed 's/"//g'
 }
 
 function .zsh_git_ls_is_git_dir() {
@@ -148,6 +159,28 @@ function .zsh_git_ls_get_filename() {
 
 function .zsh_git_ls_get_raw_filename() {
     echo "$filename" |  sed 's/\x1B\[[0-9;]*m//g' | sed -r 's/^ ?'\''?([^'\'']+)'\''?.*$/\1/' | sed -r 's/^(.*?)\s+->\s+.*$/\1/g' | sed -r 's/^(.*?)[*/=>@|]$/\1/'
+}
+
+function .zsh_git_ls_is_ignored() {
+    local file_path="$1"
+
+    if [[ "${file_path:t}" == '.' ]] || [[ "${file_path:t}" == '..' ]] || [[ "${file_path:t}" == '.git' ]]; then
+        return 0
+    fi
+
+    local ignored_paths="$2"
+    local total_parts=''
+    for part in ${(s:/:)file_path}; do
+        total_parts="$total_parts$part/"
+        ignored_paths=$(echo "$ignored_paths" | grep "^${total_parts:0:-1}")
+        local lines=$(echo "$ignored_paths" | wc -l)
+        if (( $lines == 1 )); then
+            return $([[ "$ignored_paths" =~ "^${total_parts:0:-1}/?$" ]])
+        elif (( $lines == 0 )); then
+            return 1
+        fi
+    done
+    return 1
 }
 
 function .zsh_git_ls_get_status_character() {
