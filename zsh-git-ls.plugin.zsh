@@ -102,10 +102,6 @@ function .zsh_git_ls_parse_line() {
     local ignored_paths="$6"
     local file_status_character
 
-    if [[ -n "$git_status" ]] && [[ "$git_status" != 'not_a_git_dir' ]]; then
-        git_status="$git_status\n!! ./\n!! ../\n!! .git/"
-    fi
-
     if [[ "$git_status" != 'not_a_git_dir' ]]; then
         local dir_path=$(realpath "$dir")
         local repo_path=$(git -C "$dir" rev-parse --show-toplevel)
