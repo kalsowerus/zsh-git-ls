@@ -112,9 +112,9 @@ function .zsh_git_ls_parse_line() {
         if [[ -d "$repo_path/$file_path" ]]; then
             local dir_status=$(echo "$git_status" | grep "^.. $file_path/")
             if [[ "$dir_status" =~ '[ ?]. .*' ]]; then # dirty
-                file_status='/M'
-            elif [[ "$dir_status" =~ '.M .*' ]]; then # modified & dirty
                 file_status=' /'
+            elif [[ "$dir_status" =~ '.M .*' ]]; then # modified & dirty
+                file_status='/M'
             elif [[ "$dir_status" =~ '.  .*' ]]; then # modified
                 file_status='/ '
             elif .zsh_git_ls_is_ignored "$file_path" "$ignored_paths"; then
@@ -193,34 +193,41 @@ function .zsh_git_ls_get_status_character() {
     local DIRTY_COLOR="\e[0;${ZSH_GIT_LS_DIRTY_COLOR:-31}m"
     local NOT_MODIFIED_COLOR="\e[0;${ZSH_GIT_LS_NOT_MODIFIED_COLOR:-32}m"
 
-    1=$(echo "$1" | sed -r 's/[^ARM?!/]/ /g')
-    if [[ $1 == 'M ' ]]; then   # modified
-        echo -n "$MODIFIED_COLOR$MODIFIED_CHARACTER$RESET_COLOR"
-    elif [[ $1 == 'MM' ]]; then # modified & dirty
-        echo -n "$MODIFIED_DIRTY_COLOR$MODIFIED_CHARACTER$RESET_COLOR"
-    elif [[ $1 == ' M' ]]; then # dirty
-        echo -n "$DIRTY_COLOR$MODIFIED_CHARACTER$RESET_COLOR"
-    elif [[ $1 == 'A ' ]]; then # added
-        echo -n "$MODIFIED_COLOR$ADDED_CHARACTER$RESET_COLOR"
-    elif [[ $1 == 'AM' ]]; then # added & dirty
-        echo -n "$MODIFIED_DIRTY_COLOR$ADDED_CHARACTER$RESET_COLOR"
-    elif [[ $1 == 'R ' ]]; then # renamed
-        echo -n "$MODIFIED_COLOR$RENAMED_CHARACTER$RESET_COLOR"
-    elif [[ $1 == 'RM' ]]; then # renamed & dirty
-        echo -n "$MODIFIED_DIRTY_COLOR$RENAMED_CHARACTER$RESET_COLOR"
-    elif [[ $1 == '??' ]]; then # untracked
+    # untracked or ignored
+    if [[ $1 == '??' ]]; then   # untracked
         echo -n "$DIRTY_COLOR$UNTRACKED_CHARACTER$RESET_COLOR"
+        return
     elif [[ $1 == '!!' ]]; then # ignored
-        echo -n ' '
-    elif [[ $1 == '/ ' ]]; then # dir containing files that are modified
-        echo -n "$MODIFIED_COLOR$DIR_CONTAINING_CHANGES_CHARACTER$RESET_COLOR"
-    elif [[ $1 == ' /' ]]; then # dir containing files that are modified & dirty
-        echo -n "$MODIFIED_DIRTY_COLOR$DIR_CONTAINING_CHANGES_CHARACTER$RESET_COLOR"
-    elif [[ $1 == '/M' ]]; then # dir containing files that are dirty
-        echo -n "$DIRTY_COLOR$DIR_CONTAINING_CHANGES_CHARACTER$RESET_COLOR"
-    else                        # not modified
-        echo -n "$NOT_MODIFIED_COLOR$NOT_MODIFIED_CHARACTER$RESET_COLOR"
+        echo -n ' '
+        return
     fi
+
+    # get color
+    if [[ "$1" =~ '\S ' ]]; then    # all changes in index
+        echo -n "$MODIFIED_COLOR"
+    elif [[ "$1" =~ '\S\S' ]]; then # some changes in index
+        echo -n "$MODIFIED_DIRTY_COLOR"
+    elif [[ "$1" =~ ' \S' ]]; then  # all changes not in index
+        echo -n "$DIRTY_COLOR"
+    else                            # no changes
+        echo -n "$NOT_MODIFIED_COLOR"
+    fi
+
+    # get character
+    if [[ "$1" =~ 'A' ]]; then   # added file
+        echo -n "$ADDED_CHARACTER"
+    elif [[ "$1" =~ 'R' ]]; then # renamed file
+        echo -n "$RENAMED_CHARACTER"
+    elif [[ "$1" =~ '/' ]]; then # directory containing changes
+        echo -n "$DIR_CONTAINING_CHANGES_CHARACTER"
+    elif [[ "$1" =~ 'M' ]]; then # modified
+        echo -n "$MODIFIED_CHARACTER"
+    else                         # not modified
+        echo -n "$NOT_MODIFIED_CHARACTER"
+    fi
+
+    # reset color
+    echo -n "$RESET_COLOR"
 }
 
 function .zsh_git_ls_print_help() {
