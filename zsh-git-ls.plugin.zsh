@@ -2,7 +2,7 @@ function git-ls() {
     zmodload zsh/datetime
     local IFS='
 '
-    local DELIMITER='%'
+    local DELIMITER='\x00'
 
     zparseopts -D -E -F -a todo - \
         a=ls_opts -all=ls_opts \
@@ -127,13 +127,13 @@ function git-ls() {
             fi
             file_status_character=$(.zsh_git_ls_get_status_character "$file_status")
         else
-            file_status_character=' '
+            file_status_character=' '
         fi
         section="$section$DELIMITER$file_status_character"
 
         # file name
         local colored_filename=$(cd "$dir" && command ls --color=always -d "$filename")
-        section="$section$DELIMITER${colored_filename}"
+        section="$section ${colored_filename}"
 
         section="$section\n"
     done
@@ -145,6 +145,12 @@ function git-ls() {
     return $rc
 }
 
+function .zsh_git_ls_get_git_status() {
+    if .zsh_git_ls_is_git_dir "$1"; then
+        echo "${$(command git -C "$1" status --porcelain -uall 2>/dev/null | grep -v '^!!' | sed 's/"//g'):-empty}"
+    fi
+}
+
 function .zsh_git_ls_print_section() {
     local section="$1"
     local total="$2"
@@ -152,7 +158,40 @@ function .zsh_git_ls_print_section() {
     if [[ -n "$total" ]]; then
         echo "total $(numfmt --to=iec "$total")"
     fi
-    echo -n "$section" | column -t -s "$DELIMITER" | sed -r 's/ ( +)/\1/g' | sed -r 's/(\S+) ( +)/\2\1 /g'
+    .zsh_git_ls_print_table "$section"
+}
+
+function .zsh_git_ls_print_table() {
+    local content="$1"
+
+    local widths=()
+
+    for line in "${(@s/\n/)content}"; do
+        local i=1
+        for field in "${(@s/\x00/)line}"; do
+            local length="${#field}"
+            if (( ${widths[$i]:-0} < $length )); then
+                widths[$i]="$length"
+            fi
+            (( i++ ))
+        done
+    done
+
+    for line in "${(@s/\n/)content}"; do
+        if [[ -z "$line" ]]; then
+            continue
+        fi
+        local i=1
+        for field in "${${(@s/\x00/)line}[@]:0:-1}"; do
+            if [[ "$field" =~ '^[0-9]*.$' ]]; then
+                echo -n "${(l:$widths[$i]:: :)field} "
+            else
+                echo -n "${(r:$widths[$i]:: :)field} "
+            fi
+            (( i++ ))
+        done
+        echo "${${(@s/\x00/)line}[-1]}"
+    done
 }
 
 function .zsh_git_ls_is_git_dir() {
@@ -193,7 +232,7 @@ function .zsh_git_ls_get_status_character() {
         echo -n "$DIRTY_COLOR$UNTRACKED_CHARACTER$RESET_COLOR"
         return
     elif [[ $1 == '!!' ]]; then # ignored
-        echo -n ' '
+        echo -n ' '
         return
     fi
 
