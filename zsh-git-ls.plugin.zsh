@@ -135,6 +135,16 @@ function git-ls() {
         local colored_filename=$(cd "$dir" && command ls --color=always -d "$filename")
         section="$section ${colored_filename}"
 
+        local link=
+        link=$(readlink "$dir/$filename")
+        if [[ $? == 0 ]]; then
+            if [[ -e "$link" ]]; then
+                section="$section -> $link"
+            else
+                section="$section -> \e[0;31m$link\e[0m"
+            fi
+        fi
+
         section="$section\n"
     done
 
