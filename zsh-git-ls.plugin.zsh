@@ -64,8 +64,10 @@ function git-ls() {
 
 
     # shellcheck disable=SC2066,SC2296
+    local match
+    local dir_path
+    local colored_filename
     for filename in "${(@f)list}"; do
-        local match
         if [[ -z "${filename}" ]]; then # empty line separating sections when listing multiple files/directories
             .zsh_git_ls_print_section "${section}" "${total}"
             section=
@@ -110,7 +112,6 @@ function git-ls() {
         section="${section}${DELIMITER}$(strftime '%b %e %H:%M' "${stat[6]}")"
 
         # git status character
-        local dir_path
         dir_path=$(realpath "${dir}")
         if [[ -n "${git_status}" ]]; then
             local path_prefix="${dir_path#"${repo_path}"}"
@@ -143,7 +144,6 @@ function git-ls() {
         section="${section}${DELIMITER}${file_status_character}"
 
         # file name
-        local colored_filename
         colored_filename=$(cd "${dir}" && command ls --color=always -d "${filename}")
         section="${section} ${colored_filename}"
 
