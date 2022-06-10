@@ -230,25 +230,10 @@ Usage: $1 [OPTION]... [FILE]...
 For explanations for the following options see 'ls --help'.
     -a, --all
     -A, --almost-all
-    -B, --ignore-backups
-    -d, --directory
-    -F, --classify
-        --file-type
-        --group-directories-first
     -h, --human-readable
         --si
-        --hide=PATTERN
-        --indicator-style=WORD
-    -I, --ignore=PATTERN
-    -p
     -r, --reverse
-    -R, --recursive
     -S
-        --sort=WORD
-    -t
-    -U
-    -v
-    -X
 EOHELP
 }
 
