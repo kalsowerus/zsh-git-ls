@@ -8,6 +8,7 @@ mkdir "$test_repo"
 git -C "$test_repo" init
 git -C "$test_repo" config user.name 'author'
 git -C "$test_repo" config user.email 'author@example.com'
+git -C "$test_repo" config commit.gpgsign false
 echo '04_ignored_dir\n14_ignored\n' > "$test_repo/.gitignore"
 
 # create files
