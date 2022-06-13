@@ -148,7 +148,7 @@ function git-ls() {
             fi
 
             # shellcheck disable=SC2164
-            section="${section}\t$(cd "${dir}"; command ls ${o_ls_opts} -ld --color=always --time-style='+%H:%M' "${file_info[1]##*/}" | sed -E 's/.*?[0-9]{2}:[0-9]{2}\s*(.*)$/\1/')\n"
+            section="${section}\t$(cd "${dir}"; command ls ${o_ls_opts} -ld --color=always --time-style='+&&' "${file_info[1]##*/}" | sed -E 's/.*?&&\s*(.*)$/\1/')\n"
         done
         echo "total $(numfmt --to=iec "${total}")"
         echo "${section}" | column -t -o ' ' -s $'\t' -R 2,5
