@@ -8,10 +8,12 @@ function git-ls() {
     zparseopts -D -E -F -a todo - \
         a=o_all -all=o_all \
         A=o_almost_all -almost-all=o_almost_all \
+        -group-directories-first=o_group_directories_first \
         h=o_human_readable -human-readable=o_human_readable \
         -si=o_si \
         r=o_reverse -reverse=o_reverse \
         S=o_S \
+        t=o_t \
         -help=o_help 2>/dev/null
 
     # shellcheck disable=SC2181
@@ -37,6 +39,9 @@ function git-ls() {
     local files=
     local file=
     local stat=
+    local file_infos=
+    local item=
+    local file_info=
     local section=
     local repo_path=
     local git_status=
@@ -73,28 +78,48 @@ function git-ls() {
         fi
         files+=("${dir}"/*)
 
+        file_infos=()
         # shellcheck disable=SC2128
         for file in ${files}; do
+            stat=("$(command stat --printf $'%n\t%A\t%h\t%G\t%U\t%s\t%Y\t%b\t%B\t%F' "${file}")")
+            file_infos+=($(echo "${stat}" | sed 's/\tdirectory$/\t0/g' | sed 's/\t[^\t1]*$/\t1/g'))
+        done
+
+        # sorting
+        if [[ -n "${o_S}" ]]; then
+            file_infos=($(sort -h -r -k 6 <<< "${file_infos}"))
+        fi
+        if [[ -n "${o_t}" ]]; then
+            file_infos=($(sort -n -r -k 7 <<< "${file_infos}"))
+        fi
+        if [[ -n "${o_group_directories_first}" ]]; then
+            file_infos=($(sort -n -k 10 <<< "${file_infos}"))
+        fi
+        if [[ -n "${o_reverse}" ]]; then
+            file_infos=($(tac <<< "${file_infos}"))
+        fi
+
+        for item in ${file_infos}; do
+            file_info=($(echo "${item}" | sed 's/\t/\n/g' ))
             # shellcheck disable=SC2207
-            stat=($(command stat --printf '%A\n%h\n%G\n%U\n%s\n%Y\n%b\n%B\n%F' "${file}"))
-            (( total += stat[7]*stat[8] ))
-            section="${section}${stat[1]}\t${stat[2]}\t${stat[3]}\t${stat[4]}"
+            (( total += file_info[8]*file_info[9] ))
+            section="${section}${file_info[2]}\t${file_info[3]}\t${file_info[4]}\t${file_info[5]}"
         
             if [[ -n "${o_human_readable}" ]]; then
-                size=$(numfmt --to=iec "${stat[5]}")
+                size=$(numfmt --to=iec "${file_info[6]}")
             elif [[ -n "${o_si}" ]]; then
-                size=$(numfmt --to=si "${stat[5]}")
+                size=$(numfmt --to=si "${file_info[6]}")
             else
-                size="${stat[5]}"
+                size="${file_info[6]}"
             fi
             section="${section}\t${size}"
         
-            section="${section}\t$(strftime '%b %e %H:%M' "${stat[6]}")"
+            section="${section}\t$(strftime '%b %e %H:%M' "${file_info[7]}")"
 
             # git status character
             if [[ -n "${git_status}" ]]; then
                 # shellcheck disable=SC2300
-                file_path=${$(realpath -s "${file}")#${repo_path}/}
+                file_path=${$(realpath -s "${dir}/${file_info[1]}")#${repo_path}/}
                 local file_status=
                 if [[ -d "${repo_path}/${file_path}" ]] && [[ ! -L "${repo_path}/${file_path}" ]]; then
                     dir_status=$(echo "${git_status}" | grep "^.. ${file_path}/")
@@ -119,17 +144,9 @@ function git-ls() {
             fi
 
             # shellcheck disable=SC2164
-            section="${section}\t$(cd "$(dirname "$(realpath "${file}")")"; command ls -ld --color=always --time-style=iso "${file##*/}" | sed -E 's/.*?[0-9]{2}:[0-9]{2}\s*(.*)$/\1/')\n"
+            section="${section}\t$(cd "${dir}"; command ls -ld --color=always --time-style=iso "${file_info[1]##*/}" | sed -E 's/.*?[0-9]{2}:[0-9]{2}\s*(.*)$/\1&')\n"
         done
         echo "total $(numfmt --to=iec "${total}")"
-
-        # sorting
-        if [[ -n "${o_S}" ]]; then
-            section=$(echo "${section}" | sort -h -r -k 5)
-        fi
-        if [[ -n "${o_reverse}" ]]; then
-            section=$(echo "${section}" | tac)
-        fi
         echo "${section}" | column -t -o ' ' -s $'\t' -R 2,5
 
         if (( $# > 1 )); then
