@@ -8,9 +8,13 @@ function git-ls() {
     zparseopts -D -E -F -a todo - \
         a=o_all -all=o_all \
         A=o_almost_all -almost-all=o_almost_all \
+        F=o_ls_opts -classify=o_ls_opts \
+        -file-type=o_ls_opts \
         -group-directories-first=o_group_directories_first \
         h=o_human_readable -human-readable=o_human_readable \
         -si=o_si \
+        -indicator-style:=o_ls_opts \
+        p=o_ls_opts \
         r=o_reverse -reverse=o_reverse \
         S=o_S \
         t=o_t \
@@ -144,7 +148,7 @@ function git-ls() {
             fi
 
             # shellcheck disable=SC2164
-            section="${section}\t$(cd "${dir}"; command ls -ld --color=always --time-style='+%H:%M' "${file_info[1]##*/}" | sed -E 's/.*?[0-9]{2}:[0-9]{2}\s*(.*)$/\1/')\n"
+            section="${section}\t$(cd "${dir}"; command ls ${o_ls_opts} -ld --color=always --time-style='+%H:%M' "${file_info[1]##*/}" | sed -E 's/.*?[0-9]{2}:[0-9]{2}\s*(.*)$/\1/')\n"
         done
         echo "total $(numfmt --to=iec "${total}")"
         echo "${section}" | column -t -o ' ' -s $'\t' -R 2,5
@@ -250,10 +254,16 @@ Usage: $1 [OPTION]... [FILE]...
 For explanations for the following options see 'ls --help'.
     -a, --all
     -A, --almost-all
+    -F, --classify
+        --file-type
+        --group-directories-first
     -h, --human-readable
         --si
+        --indicator-style=WORD
+    -p
     -r, --reverse
     -S
+    -t
 EOHELP
 }
 
