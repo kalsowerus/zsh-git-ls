@@ -119,7 +119,7 @@ function git-ls() {
             fi
 
             # shellcheck disable=SC2164
-            section="${section}\t$(cd "$(dirname "$(realpath "${file}")")"; command ls -ld --color=always --time-style=iso "${file##*/}" | sed -E 's/.*?[0-9]{2}:[0-9]{2}(.*)$/\1/')\n"
+            section="${section}\t$(cd "$(dirname "$(realpath "${file}")")"; command ls -ld --color=always --time-style=iso "${file##*/}" | sed -E 's/.*?[0-9]{2}:[0-9]{2}\s*(.*)$/\1/')\n"
         done
         echo "total $(numfmt --to=iec "${total}")"
 
