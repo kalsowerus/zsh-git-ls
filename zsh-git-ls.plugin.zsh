@@ -87,13 +87,13 @@ function git-ls() {
 
         # sorting
         if [[ -n "${o_S}" ]]; then
-            file_infos=($(sort -h -r -k 6 <<< "${file_infos}"))
+            file_infos=($(sort -hrs -k 6 <<< "${file_infos}"))
         fi
         if [[ -n "${o_t}" ]]; then
-            file_infos=($(sort -n -r -k 7 <<< "${file_infos}"))
+            file_infos=($(sort -nrs -k 7 <<< "${file_infos}"))
         fi
         if [[ -n "${o_group_directories_first}" ]]; then
-            file_infos=($(sort -n -k 10 <<< "${file_infos}"))
+            file_infos=($(sort -ns -k 10 <<< "${file_infos}"))
         fi
         if [[ -n "${o_reverse}" ]]; then
             file_infos=($(tac <<< "${file_infos}"))
