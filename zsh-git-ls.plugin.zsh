@@ -130,7 +130,7 @@ function git-ls() {
         if [[ -n "${o_reverse}" ]]; then
             section=$(echo "${section}" | tac)
         fi
-        echo "${section}" | column -t -o ' ' -s $'\t'
+        echo "${section}" | column -t -o ' ' -s $'\t' -R 2,5
 
         if (( $# > 1 )); then
             echo
