@@ -39,9 +39,12 @@ function git-ls() {
     local stat=
     local section=
     local repo_path=
+    local git_status=
     local size=
     local total=
-    local dir_status
+    local file_path=
+    local dir_status=
+    local file_status_character=
     # shellcheck disable=SC2128,SC2250
     for dir in $dirs; do
         if [[ ! -d "${dir}" ]]; then
