@@ -82,7 +82,7 @@ function git-ls() {
         # shellcheck disable=SC2128
         for file in ${files}; do
             stat=("$(command stat --printf $'%n\t%A\t%h\t%G\t%U\t%s\t%Y\t%b\t%B\t%F' "${file}")")
-            file_infos+=($(echo "${stat}" | sed 's/\tdirectory$/\t0/g' | sed 's/\t[^\t1]*$/\t1/g'))
+            file_infos+=($(echo "${stat}" | sed 's/\tdirectory$/\t0/g' | sed 's/\t[^\t0]*$/\t1/g'))
         done
 
         # sorting
@@ -144,7 +144,7 @@ function git-ls() {
             fi
 
             # shellcheck disable=SC2164
-            section="${section}\t$(cd "${dir}"; command ls -ld --color=always --time-style=iso "${file_info[1]##*/}" | sed -E 's/.*?[0-9]{2}:[0-9]{2}\s*(.*)$/\1&')\n"
+            section="${section}\t$(cd "${dir}"; command ls -ld --color=always --time-style='+%H:%M' "${file_info[1]##*/}" | sed -E 's/.*?[0-9]{2}:[0-9]{2}\s*(.*)$/\1/')\n"
         done
         echo "total $(numfmt --to=iec "${total}")"
         echo "${section}" | column -t -o ' ' -s $'\t' -R 2,5
