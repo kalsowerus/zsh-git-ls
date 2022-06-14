@@ -118,7 +118,7 @@ function git-ls() {
             # git status character
             if [[ -n "${git_status}" ]]; then
                 # shellcheck disable=SC2300
-                file_path=${$(realpath -s "${dir}/${file_info[1]}")#${repo_path}/}
+                file_path=${$(realpath -s "${file_info[1]}")#${repo_path}/}
                 local file_status=
                 if [[ -d "${repo_path}/${file_path}" ]] && [[ ! -L "${repo_path}/${file_path}" ]]; then
                     dir_status=$(echo "${git_status}" | grep "^.. ${file_path}/")
