@@ -183,7 +183,7 @@ function .zsh_git_ls_is_ignored() {
     local repo_path="${1}"
     local file_path="${2}"
 
-    if [[ "${file_path:t}" == '.' ]] || [[ "${file_path:t}" == '..' ]] || [[ "${file_path:t}" == '.git' ]]; then
+    if [[ "${file_path}" =~ '^/' ]] || [[ "${file_path:t}" == '.git' ]]; then
         return 0
     fi
 
