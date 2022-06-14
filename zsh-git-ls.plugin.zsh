@@ -82,12 +82,7 @@ function git-ls() {
         fi
         files+=("${dir}"/*)
 
-        file_infos=()
-        # shellcheck disable=SC2128
-        for file in ${files}; do
-            stat=("$(command stat --printf $'%n\t%A\t%h\t%G\t%U\t%s\t%Y\t%b\t%B\t%F' "${file}")")
-            file_infos+=($(echo "${stat}" | sed 's/\tdirectory$/\t0/g' | sed 's/\t[^\t0]*$/\t1/g'))
-        done
+        file_infos=($(command stat --printf '%n\t%A\t%h\t%G\t%U\t%s\t%Y\t%b\t%B\t%F\n' ${files} | sed 's/\tdirectory$/\t0/g' | sed 's/\t[^\t0]*$/\t1/g'))
 
         # sorting
         if [[ -n "${o_S}" ]]; then
