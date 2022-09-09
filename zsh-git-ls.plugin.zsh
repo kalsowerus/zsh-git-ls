@@ -1,7 +1,7 @@
 # shellcheck disable=SC2076
 
 function git-ls() {
-    setopt local_options warn_create_global
+    setopt local_options warn_create_global no_nomatch
     zmodload zsh/datetime
     local IFS='
 '
@@ -80,7 +80,12 @@ function git-ls() {
             setopt glob_dots
             files+=(. ..)
         fi
-        files+=("${dir}"/*)
+        files+=("${dir}"/*(N))
+
+        if (( ${#files} < 1 )); then
+            echo "total 0"
+            return
+        fi
 
         file_infos=($(command stat --printf '%n\t%A\t%h\t%G\t%U\t%s\t%Y\t%b\t%B\t%F\n' ${files} | sed 's/\tdirectory$/\t0/g' | sed 's/\t[^\t0]*$/\t1/g'))
 
